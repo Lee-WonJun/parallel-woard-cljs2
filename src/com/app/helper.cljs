@@ -1,6 +1,5 @@
-(ns com.app.hepler
+(ns com.app.helper
   (:require [com.app.const :refer [dir-deltas]]))
-
 
 (defn within-bounds?
   "[(x y) width height] -> boolean"

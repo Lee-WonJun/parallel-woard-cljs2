@@ -1,7 +1,7 @@
 (ns com.app.generator
   (:require [clojure.core :as core]
             [com.app.const :refer [directions]]
-            [com.app.hepler :refer [put-base put-overlay move-step]]))
+            [com.app.helper :refer [put-base put-overlay move-step]]))
 
 (defn cumulative-sums
   "[nums] -> 주어진 숫자 시퀀스 누적합 벡터"
@@ -13,12 +13,12 @@
   [cum-w]
   (let [total (peek cum-w)
         r     (rand total)]
-    (core/first (keep-indexed (fn [i w] (when (> w r) i)) cum-w))))
+    (first (keep-indexed (fn [i w] (when (> w r) i)) cum-w))))
 
 (defn create-rand-move
   "랜덤 이동 시퀀스 생성: ([count] | ([count weights]))"
   ([count]
-   (create-rand-move count (repeatedly 4 #(rand-int 10))))
+   (create-rand-move count (repeatedly 4 #(+ 1 (rand-int 10)))))
   ([count weights]
    (let [cum-w (cumulative-sums weights)]
      (->> (repeatedly #(weighted-rand-index cum-w))
@@ -51,17 +51,28 @@
      :player-pos player-pos
      :goal-pos   goal-pos}))
 
+(defn generate-random-walls
+  "랜덤한 벽 위치들을 생성"
+  [width height player-pos wall-density]
+  (let [total-cells (* width height)
+        wall-count (int (* total-cells wall-density))
+        all-positions (for [x (range width) y (range height)] [x y])]
+    (->> all-positions
+         (remove #(= % player-pos))
+         shuffle
+         (take wall-count))))
+
 (defn init-boards
   "[move-count configs] -> 여러 보드 생성"
   [move-count configs]
-  (mapv (fn [{:keys [width height player-pos walls-pos route]}]
-          (let [r   (or route (create-rand-move move-count))
-                pp  (or player-pos [(rand-int width) (rand-int height)])
-                wp  (or walls-pos (->> (repeatedly (* width height 30) #(vector (rand-int width) (rand-int height)))
-                                       distinct
-                                       (take (int (* width height 0.3)))))]
-            (create-board width height pp wp r)))
-        configs))
+  (let [global-route (create-rand-move move-count)]
+    (mapv (fn [{:keys [width height player-pos walls-pos route wall-density]
+                :or {wall-density 0.25}}]
+            (let [r   (or route global-route)
+                  pp  (or player-pos [(rand-int width) (rand-int height)])
+                  wp  (or walls-pos (generate-random-walls width height pp wall-density))]
+              (create-board width height pp wp r)))
+          configs)))
 
 (comment
 (let [route (create-rand-move 10)
