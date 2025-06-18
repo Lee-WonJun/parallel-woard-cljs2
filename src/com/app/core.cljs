@@ -31,7 +31,8 @@
 ;; 키보드 이벤트 핸들러
 (defn handle-keydown [event]
   (let [keycode (.-keyCode event)
-        direction (get key-mappings keycode)]
+        direction (get key-mappings keycode)
+        game-status (:game-status @state/game-state)]
     (cond
       ;; 방향키 입력
       direction
@@ -39,11 +40,14 @@
         (.preventDefault event)
         (state/add-move! direction))
       
-      ;; 스페이스바 - 되돌리기
+      ;; 스페이스바 처리
       (= keycode keycodes/SPACE)
       (do
         (.preventDefault event)
-        (state/undo-move!))
+        ;; 완료 상태일 때는 다음 레벨로, 아니면 되돌리기
+        (if (= game-status :completed)
+          (state/next-level!)
+          (state/undo-move!)))
       
       ;; 백스페이스 - 초기화
       (= keycode keycodes/BACKSPACE)
@@ -89,7 +93,7 @@
   (println "")
   (println "🎯 조작법:")
   (println "  ↑↓←→ 또는 WASD: 이동")
-  (println "  스페이스바: 되돌리기")
+  (println "  스페이스바: 되돌리기 / 레벨 완료 시 다음 레벨")
   (println "  백스페이스: 초기화") 
   (println "  R: 레벨 리셋")
   (println "  H: 힌트 보기/숨기기")

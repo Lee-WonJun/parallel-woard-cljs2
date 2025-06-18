@@ -343,10 +343,15 @@
                       :margin-bottom "20px"
                       :font-size "2em"}}
          "🎉 레벨 완료!"]
-        [:p {:style {:margin-bottom "30px"
+        [:p {:style {:margin-bottom "20px"
                      :font-size "1.2em"
                      :color "#333"}}
          (str "레벨 " (:current-level game-state) "을 " (:move-count game-state) "번의 이동으로 완료했습니다!")]
+        [:p {:style {:margin-bottom "30px"
+                     :font-size "0.9em"
+                     :color "#666"
+                     :font-style "italic"}}
+         "💡 스페이스바를 눌러서 다음 레벨로 넘어갈 수 있습니다"]
         [:div {:style {:display "flex"
                        :gap "10px"
                        :justify-content "center"}}
