@@ -79,8 +79,11 @@
               :gap "20px"
               :padding "20px"
               :min-height "400px"}}
-     (map-indexed (fn [idx board]
-                    (board-component (:board board) idx))
+     (map-indexed (fn [idx board-data]
+                    (let [board (if (map? board-data) 
+                                  (:board board-data)
+                                  board-data)]
+                      (board-component board idx)))
                   boards)]))
 
 (defn game-header 
@@ -292,7 +295,8 @@
 (defn game-screen 
   "메인 게임 화면 컴포넌트"
   []
-  (let [boards (state/get-updated-boards)]
+  (let [game-state @state/game-state
+        boards (state/get-updated-boards)]
     [:div.game-screen
      {:style {:min-height "100vh"
               :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"}}

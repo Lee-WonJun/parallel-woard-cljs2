@@ -8,6 +8,7 @@
 (defonce game-state
   (r/atom {:current-level 1
            :boards []
+           :updated-boards []
            :player-inputs []
            :game-status :playing ; :playing, :completed, :failed
            :show-solution false
@@ -28,6 +29,7 @@
                                    (map #(assoc % :route route) configs))]
         (swap! game-state assoc
                :boards boards
+               :updated-boards []
                :player-inputs []
                :game-status :playing
                :show-solution false
@@ -50,13 +52,15 @@
   (when (and (= (:game-status @game-state) :playing)
              (not-empty (:player-inputs @game-state)))
     (swap! game-state update :player-inputs pop)
-    (swap! game-state update :move-count dec)))
+    (swap! game-state update :move-count dec)
+    (swap! game-state assoc :updated-boards [])))
 
 (defn reset-moves! 
   "모든 이동 초기화"
   []
   (swap! game-state assoc 
          :player-inputs []
+         :updated-boards []
          :move-count 0
          :game-status :playing))
 
@@ -93,7 +97,7 @@
     (when (seq boards)
       (let [updated-boards (map #(move/move % inputs) boards)
             all-completed? (every? #(= (:player-pos %) (:goal-pos %)) updated-boards)]
-        (swap! game-state assoc :boards updated-boards)
+        (swap! game-state assoc :updated-boards updated-boards)
         (when all-completed?
           (let [level (:current-level @game-state)
                 move-count (:move-count @game-state)
@@ -108,8 +112,46 @@
 
 (defn get-updated-boards []
   "플레이어 입력이 적용된 보드들 반환"
-  (let [boards (:boards @game-state)
+  (let [updated-boards (:updated-boards @game-state)
+        boards (:boards @game-state)
         inputs (:player-inputs @game-state)]
-    (if (and (seq boards) (every? map? boards))
-      (map #(move/move % inputs) boards)
-      [])))
+    ;; 캐시된 업데이트된 보드가 있으면 사용, 없으면 새로 계산
+    (if (seq updated-boards)
+      updated-boards
+      (if (and (seq boards) (every? map? boards))
+        (map #(move/move % inputs) boards)
+        []))))
+
+;; 디버깅 헬퍼 함수들
+(defn print-board-correct []
+  "현재 게임 상태와 보드 상태를 출력"
+  (let [state @game-state
+        boards (get-updated-boards)]
+    (println "")
+    (println "=== 게임 상태 ===")
+    (println "레벨:" (:current-level state))
+    (println "이동 횟수:" (:move-count state))
+    (println "상태:" (:game-status state))
+    (when-let [first-board (first boards)]
+      (println "플레이어 위치:" (:player-pos first-board))
+      (println "목표 위치:" (:goal-pos first-board)))
+    (println "")
+    (println "=== 보드 ===")
+    (when-let [first-board (first boards)]
+      (let [board (:board first-board)]
+        (doseq [row board]
+          (println (apply str (map (fn [[base overlay]]
+                                     (cond
+                                       (= overlay :player) "P"
+                                       (= base :wall) "█"
+                                       (= base :goal) "G"
+                                       :else "."))
+                                   row))))))
+    (println "===============")
+    (println "")))
+
+(defn force-refresh-boards! []
+  "보드 상태를 강제로 새로고침"
+  []
+  (swap! game-state assoc :updated-boards [])
+  (check-game-completion!))
