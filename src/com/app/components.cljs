@@ -50,7 +50,7 @@
               :background-color "#FFE0E0"
               :color "#FF0000"
               :text-align "center"}}
-     "보드 데이터 오류"]
+     "Board Data Error"]
     (let [height (count board)
           width (count (first board))]
       [:div.board
@@ -118,7 +118,7 @@
       [:div.level-info
        [:h2 {:style {:margin "0"
                      :font-size "1.4em"}}
-        (str "레벨 " level " - " (:name current-stage))]
+        (str "Level " level " - " (:name current-stage))]
        [:p {:style {:margin "5px 0 0 0"
                     :opacity "0.9"
                     :font-size "0.9em"}}
@@ -133,7 +133,7 @@
                  :padding "8px 16px"
                  :border-radius "20px"
                  :backdrop-filter "blur(10px)"}}
-        [:span {:style {:font-size "0.9em" :opacity "0.8"}} "이동: "]
+        [:span {:style {:font-size "0.9em" :opacity "0.8"}} "Moves: "]
         [:strong {:style {:font-size "1.2em"}} move-count]]
        
        (when best-score
@@ -142,7 +142,7 @@
                    :padding "8px 16px"
                    :border-radius "20px"
                    :backdrop-filter "blur(10px)"}}
-          [:span {:style {:font-size "0.9em" :opacity "0.8"}} "최고: "]
+          [:span {:style {:font-size "0.9em" :opacity "0.8"}} "Best: "]
           [:strong {:style {:font-size "1.2em" :color "#FFD700"}} best-score]])
        
        (when (= status :completed)
@@ -152,7 +152,7 @@
                    :border-radius "20px"
                    :backdrop-filter "blur(10px)"
                    :color "#00FF00"}}
-          "🎉 완료!"])]]]))
+          "🎉 Complete!"])]]]))
 
 (defn control-panel 
   "조작 패널 컴포넌트"
@@ -190,7 +190,7 @@
         :on-mouse-over #(set! (.. % -target -style -transform) "translateY(-2px)")
         :on-mouse-out #(set! (.. % -target -style -transform) "translateY(0px)")
         :on-click state/reset-moves!}
-       "🔄 초기화"]
+       "🔄 Reset"]
       
       [:button.control-btn
        {:style {:padding "12px 20px"
@@ -206,7 +206,7 @@
         :on-mouse-out #(set! (.. % -target -style -transform) "translateY(0px)")
         :on-click state/undo-move!
         :disabled (empty? inputs)}
-       "⬅️ 되돌리기"]
+       "⬅️ Undo"]
       
       [:button.control-btn
        {:style {:padding "12px 20px"
@@ -225,7 +225,7 @@
         :on-mouse-over #(set! (.. % -target -style -transform) "translateY(-2px)")
         :on-mouse-out #(set! (.. % -target -style -transform) "translateY(0px)")
         :on-click state/toggle-solution!}
-       (if show-solution "🙈 해답 숨기기" "💡 해답 보기")]
+       (if show-solution "🙈 Hide Solution" "💡 Show Solution")]
       
       (when (> level 1)
         [:button.control-btn
@@ -241,7 +241,7 @@
           :on-mouse-over #(set! (.. % -target -style -transform) "translateY(-2px)")
           :on-mouse-out #(set! (.. % -target -style -transform) "translateY(0px)")
           :on-click state/prev-level!}
-         "⬅️ 이전 레벨"])
+         "⬅️ Previous Level"])
       
       (when (< level (stages/max-level))
         [:button.control-btn
@@ -257,7 +257,22 @@
           :on-mouse-over #(set! (.. % -target -style -transform) "translateY(-2px)")
           :on-mouse-out #(set! (.. % -target -style -transform) "translateY(0px)")
           :on-click state/next-level!}
-         "➡️ 다음 레벨"])]
+         "➡️ Next Level"])
+      
+      [:button.control-btn
+       {:style {:padding "12px 20px"
+                :border "none"
+                :border-radius "25px"
+                :background "linear-gradient(45deg, #8E24AA, #7B1FA2)"
+                :color "white"
+                :font-weight "bold"
+                :cursor "pointer"
+                :transition "all 0.3s ease"
+                :box-shadow "0 4px 15px rgba(123,31,162,0.3)"}
+        :on-mouse-over #(set! (.. % -target -style -transform) "translateY(-2px)")
+        :on-mouse-out #(set! (.. % -target -style -transform) "translateY(0px)")
+        :on-click state/toggle-help!}
+       "❓ How to Play"]]
      
      [:div.info-section
       [:div.player-inputs
@@ -265,7 +280,7 @@
        [:h3 {:style {:margin "0 0 10px 0"
                      :color "#333"
                      :font-size "1.1em"}}
-        "🎮 플레이어 입력:"]
+        "🎮 Player Input:"]
        [:div.input-display
         {:style {:background "#f8f9fa"
                  :padding "10px"
@@ -274,7 +289,7 @@
                  :border "2px dashed #ddd"}}
         (if (empty? inputs)
           [:span {:style {:color "#666" :font-style "italic"}}
-           "아직 이동하지 않았습니다"]
+           "No moves yet"]
           [:span {:style {:font-family "monospace" :font-size "1.1em"}}
            (str "[ " (clojure.string/join " → " (map name inputs)) " ]")])]]
       
@@ -283,7 +298,7 @@
          [:h3 {:style {:margin "0 0 10px 0"
                        :color "#333"
                        :font-size "1.1em"}}
-          "💡 해답:"]
+          "💡 Solution:"]
          [:div.solution-display
           {:style {:background "#e8f5e8"
                    :padding "10px"
@@ -291,6 +306,154 @@
                    :border "2px solid #4CAF50"}}
           [:span {:style {:font-family "monospace" :font-size "1.1em" :color "#2e7d32"}}
            (str "[ " (clojure.string/join " → " (map name current-route)) " ]")]]])]]))
+
+(defn help-modal 
+  "게임 도움말 모달"
+  []
+  (let [game-state @state/game-state
+        show? (:show-help game-state)]
+    (when show?
+      [:div.modal-overlay
+       {:style {:position "fixed"
+                :top "0"
+                :left "0"
+                :width "100%"
+                :height "100%"
+                :background "rgba(0,0,0,0.7)"
+                :display "flex"
+                :justify-content "center"
+                :align-items "center"
+                :z-index "1000"}
+        :on-click #(when (= (.-target %) (.-currentTarget %))
+                     (state/toggle-help!))}
+       [:div.modal-content
+        {:style {:background "white"
+                 :padding "30px"
+                 :border-radius "20px"
+                 :box-shadow "0 10px 30px rgba(0,0,0,0.3)"
+                 :max-width "600px"
+                 :width "90%"
+                 :max-height "80vh"
+                 :overflow-y "auto"
+                 :position "relative"}}
+        
+        [:button.close-btn
+         {:style {:position "absolute"
+                  :top "15px"
+                  :right "15px"
+                  :background "none"
+                  :border "none"
+                  :font-size "24px"
+                  :cursor "pointer"
+                  :color "#666"
+                  :padding "5px"
+                  :border-radius "50%"
+                  :width "40px"
+                  :height "40px"
+                  :display "flex"
+                  :align-items "center"
+                  :justify-content "center"}
+          :on-click state/toggle-help!
+          :on-mouse-over #(set! (.. % -target -style -background) "#f5f5f5")
+          :on-mouse-out #(set! (.. % -target -style -background) "none")}
+         "✕"]
+        
+        [:h2 {:style {:color "#4A90E2"
+                      :margin-bottom "20px"
+                      :font-size "2em"
+                      :text-align "center"}}
+         "🎯 PARALLEL WOARD - How to Play"]
+        
+        [:div.help-content
+         {:style {:line-height "1.6"
+                  :font-size "1.1em"
+                  :color "#333"}}
+         
+         [:div {:style {:margin-bottom "20px"}}
+          [:h3 {:style {:color "#E74C3C"
+                        :margin-bottom "10px"
+                        :font-size "1.3em"}}
+           "🎮 Game Objective"]
+          [:p "Control all players simultaneously to reach each goal position on every board!"]
+          [:p "All boards receive the same input, so you need to plan your moves carefully."]]
+         
+         [:div {:style {:margin-bottom "20px"}}
+          [:h3 {:style {:color "#8E44AD"
+                        :margin-bottom "10px"
+                        :font-size "1.3em"}}
+           "🕹️ Controls"]
+          [:div {:style {:background "#f8f9fa"
+                         :padding "15px"
+                         :border-radius "8px"
+                         :margin "10px 0"}}
+           [:p [:strong "Arrow Keys or WASD"] " - Move player"]
+           [:p [:strong "Spacebar"] " - Undo last move / Next level when completed"]
+           [:p [:strong "Backspace"] " - Reset all moves"]
+           [:p [:strong "R Key"] " - Restart level"]
+           [:p [:strong "H Key"] " - Show/hide solution hint"]
+           [:p [:strong "P Key"] " - Previous level"]
+           [:p [:strong "N Key"] " - Next level (cheat)"]]]
+         
+         [:div {:style {:margin-bottom "20px"}}
+          [:h3 {:style {:color "#27AE60"
+                        :margin-bottom "10px"
+                        :font-size "1.3em"}}
+           "🧩 Game Elements"]
+          [:div {:style {:display "flex"
+                         :flex-wrap "wrap"
+                         :gap "15px"
+                         :margin "15px 0"}}
+           [:div {:style {:display "flex"
+                          :align-items "center"
+                          :gap "8px"}}
+            [:img {:src "resouces/player_32.png"
+                   :alt "Player"
+                   :style {:width "24px" :height "24px"}}]
+            [:span "Player"]]
+           [:div {:style {:display "flex"
+                          :align-items "center"
+                          :gap "8px"}}
+            [:img {:src "resouces/goal_32.png"
+                   :alt "Goal"
+                   :style {:width "24px" :height "24px"}}]
+            [:span "Goal"]]
+           [:div {:style {:display "flex"
+                          :align-items "center"
+                          :gap "8px"}}
+            [:img {:src "resouces/wall_32.png"
+                   :alt "Wall"
+                   :style {:width "24px" :height "24px"}}]
+            [:span "Wall (impassable)"]]
+           [:div {:style {:display "flex"
+                          :align-items "center"
+                          :gap "8px"}}
+            [:img {:src "resouces/goalin_32.png"
+                   :alt "Goal reached"
+                   :style {:width "24px" :height "24px"}}]
+            [:span "Goal reached!"]]]]
+         
+         [:div {:style {:margin-bottom "20px"}}
+          [:h3 {:style {:color "#F39C12"
+                        :margin-bottom "10px"  
+                        :font-size "1.3em"}}
+           "💡 Game Tips"]
+          [:ul {:style {:padding-left "20px"}}
+           [:li "Study the structure of each board first"]
+           [:li "Remember that all boards move simultaneously"]
+           [:li "Be careful not to trap yourself in dead ends"]
+           [:li "Use the hint feature to see the solution route"]
+           [:li "Challenge yourself to complete levels with fewer moves!"]]]
+         
+         [:div {:style {:text-align "center"
+                        :margin-top "30px"
+                        :padding "15px"
+                        :background "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                        :color "white"
+                        :border-radius "10px"}}
+          [:p {:style {:margin "0"
+                       :font-size "1.1em"
+                       :font-weight "bold"}}
+           "🎯 Good luck and have fun!"]]]]])))
 
 (defn game-screen 
   "메인 게임 화면 컴포넌트"
@@ -310,8 +473,9 @@
                  :min-height "400px"
                  :color "white"
                  :font-size "1.5em"}}
-        "🎮 게임을 로딩 중..."])
-     [control-panel]]))
+        "🎮 Loading game..."])
+     [control-panel]
+     [help-modal]]))
 
 (defn completion-modal 
   "게임 완료 모달"
@@ -342,16 +506,16 @@
         [:h2 {:style {:color "#4CAF50"
                       :margin-bottom "20px"
                       :font-size "2em"}}
-         "🎉 레벨 완료!"]
+         "🎉 Level Completed!"]
         [:p {:style {:margin-bottom "20px"
                      :font-size "1.2em"
                      :color "#333"}}
-         (str "레벨 " (:current-level game-state) "을 " (:move-count game-state) "번의 이동으로 완료했습니다!")]
+         (str "Level " (:current-level game-state) " completed in " (:move-count game-state) " moves!")]
         [:p {:style {:margin-bottom "30px"
                      :font-size "0.9em"
                      :color "#666"
                      :font-style "italic"}}
-         "💡 스페이스바를 눌러서 다음 레벨로 넘어갈 수 있습니다"]
+         "💡 Press spacebar to proceed to the next level"]
         [:div {:style {:display "flex"
                        :gap "10px"
                        :justify-content "center"}}
@@ -363,7 +527,7 @@
                            :font-weight "bold"
                            :cursor "pointer"}
                    :on-click state/next-level!}
-          "다음 레벨"]
+          "Next Level"]
          [:button {:style {:padding "12px 24px"
                            :border "none"
                            :border-radius "25px"
@@ -372,4 +536,4 @@
                            :font-weight "bold"
                            :cursor "pointer"}
                    :on-click state/reset-level!}
-          "다시 플레이"]]]])))
+          "Play Again"]]]])))

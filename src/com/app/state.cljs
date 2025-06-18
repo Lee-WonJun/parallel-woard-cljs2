@@ -12,6 +12,7 @@
            :player-inputs []
            :game-status :playing ; :playing, :completed, :failed
            :show-solution false
+           :show-help false
            :move-count 0
            :best-scores {}
            :current-route []}))
@@ -33,6 +34,7 @@
                :player-inputs []
                :game-status :playing
                :show-solution false
+               :show-help false
                :move-count 0
                :current-route route)))))
 
@@ -88,6 +90,11 @@
   "솔루션 표시 토글"
   []
   (swap! game-state update :show-solution not))
+
+(defn toggle-help! 
+  "도움말 표시 토글"
+  []
+  (swap! game-state update :show-help not))
 
 (defn check-game-completion! 
   "게임 완료 상태 확인"
@@ -147,6 +154,10 @@
                                        (= base :goal) "G"
                                        :else "."))
                                    row))))))
+    (println "===============")
+    (println "")
+    (println "=== 도움말 ===")
+    (println "도움말 표시:" (:show-help state))
     (println "===============")
     (println "")))
 

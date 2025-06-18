@@ -89,16 +89,8 @@
 (defn init-game! []
   (state/reset-level!)
   (setup-keyboard-listeners)
-  (println "🎮 PARALLEL WOARD 게임이 시작되었습니다!")
-  (println "")
-  (println "🎯 조작법:")
-  (println "  ↑↓←→ 또는 WASD: 이동")
-  (println "  스페이스바: 되돌리기 / 레벨 완료 시 다음 레벨")
-  (println "  백스페이스: 초기화") 
-  (println "  R: 레벨 리셋")
-  (println "  H: 힌트 보기/숨기기")
-  (println "  P: 이전 레벨")
-  (println "  N: 다음 레벨"))
+  (println "🎮 PARALLEL WOARD game has started!")
+  (println "💡 Click the 'How to Play' button to learn how to play!"))
 
 ;; 앱 마운트 함수
 (defn mount-app! []
